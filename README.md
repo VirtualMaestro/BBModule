@@ -1,4 +1,4 @@
 BBModule
 ========
 
-Module system. Using in game engine
+Module system. Used in game engine

@@ -133,7 +133,7 @@ package bb
 		{
 			var module:BBModule = signal.dispatcher as BBModule;
 			_listModules.remove(module);
-			if (module.isUpdate) _listModulesToUpdating.remove(module);
+			if (module.updateEnable) _listModulesToUpdating.remove(module);
 		}
 
 		/**
@@ -141,7 +141,7 @@ package bb
 		private function updateModuleHandler(signal:BBSignal):void
 		{
 			var module:BBModule = signal.dispatcher as BBModule;
-			if (module.isUpdate) _listModulesToUpdating.append(module);
+			if (module.updateEnable) _listModulesToUpdating.append(module);
 			else _listModulesToUpdating.remove(module);
 
 			//
@@ -149,16 +149,14 @@ package bb
 		}
 
 		//
-		private var _currentTime:int = 0;
-		private var _deltaTime:int = 0;
 		private var _prevTime:int = 0;
 
 		/**
 		 */
 		private function updateModulesLoop(event:Event):void
 		{
-			_currentTime = getTimer();
-			_deltaTime = (fixedTimeStep > 0) ? fixedTimeStep : (_currentTime - _prevTime);
+			var currentTime:int = getTimer();
+			var deltaTime:int = (fixedTimeStep > 0) ? fixedTimeStep : (currentTime - _prevTime);
 
 			var node:DLLNode = _listModulesToUpdating.head;
 			var curNode:DLLNode;
@@ -167,10 +165,10 @@ package bb
 				curNode = node;
 				node = node.next;
 
-				(curNode.val as BBModule).update(_deltaTime);
+				(curNode.val as BBModule).update(deltaTime);
 			}
 
-			_prevTime = _currentTime;
+			_prevTime = currentTime;
 		}
 
 		//

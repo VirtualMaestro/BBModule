@@ -10,7 +10,7 @@ package bb.modules
 	public class BBModule
 	{
 		//
-		private var _isUpdate:Boolean = false;
+		private var _updateEnable:Boolean = false;
 
 		//
 		private var _engine:BBModuleEngine;
@@ -66,26 +66,26 @@ package bb.modules
 		 * On/off update module every step.
 		 * (it is can't be use if module is not initialized)
 		 */
-		public function set isUpdate(p_val:Boolean):void
+		public function set updateEnable(p_val:Boolean):void
 		{
-			if (_isUpdate == p_val || !isInitialized) return;
-			_isUpdate = p_val;
+			if (_updateEnable == p_val || !isInitialized) return;
+			_updateEnable = p_val;
 
 		   _onUpdate.dispatch();
 		}
 
 		/**
 		 */
-		public function get isUpdate():Boolean
+		public function get updateEnable():Boolean
 		{
-			return _isUpdate;
+			return _updateEnable;
 		}
 
 		/**
 		 * Methods calls every frame and can be overridden in the children for use.
 		 * Method take delta time - time from previous invoke.
 		 */
-		public function update(p_deltaTime:Number):void
+		public function update(p_deltaTime:int):void
 		{
 			//
 		}
@@ -176,7 +176,7 @@ package bb.modules
 
 			//
 			_engine = null;
-			_isUpdate = false;
+			_updateEnable = false;
 		}
 	}
 }

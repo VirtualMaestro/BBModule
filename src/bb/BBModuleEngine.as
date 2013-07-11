@@ -149,14 +149,21 @@ package bb
 		}
 
 		//
-		private var _prevTime:int = 0;
+		private var _prevTime:int = 1;
 
 		/**
 		 */
 		private function updateModulesLoop(event:Event):void
 		{
 			var currentTime:int = getTimer();
-			var deltaTime:int = (fixedTimeStep > 0) ? fixedTimeStep : (currentTime - _prevTime);
+			var deltaTime:int;
+
+			if (_prevTime == 1) deltaTime = _prevTime;
+			else
+			{
+				if (fixedTimeStep > 0) deltaTime = fixedTimeStep;
+				else deltaTime = currentTime - _prevTime;
+			}
 
 			var node:DLLNode = _listModulesToUpdating.head;
 			var curNode:DLLNode;
@@ -203,12 +210,7 @@ package bb
 
 			if (_listModulesToUpdating.size() > 0)
 			{
-				if (!_updateLoopOn)
-				{
-					_stage.addEventListener(Event.ENTER_FRAME, updateModulesLoop);
-					_prevTime = getTimer();
-				}
-
+				if (!_updateLoopOn) _stage.addEventListener(Event.ENTER_FRAME, updateModulesLoop);
 				_updateLoopOn = true;
 			}
 			else

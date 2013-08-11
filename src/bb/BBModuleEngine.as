@@ -166,13 +166,14 @@ package bb
 			}
 
 			var node:DLLNode = _listModulesToUpdating.head;
-			var curNode:DLLNode;
+			var curNode:DLLNode = node;
 			while (node)
 			{
 				curNode = node;
 				node = node.next;
 
 				(curNode.val as BBModule).update(deltaTime);
+				if (node && node.getList() == null) node = curNode.next;
 			}
 
 			_prevTime = currentTime;

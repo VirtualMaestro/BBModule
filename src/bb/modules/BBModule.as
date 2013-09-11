@@ -1,6 +1,5 @@
 package bb.modules
 {
-	import bb.BBModuleEngine;
 	import bb.signals.BBSignal;
 
 	import flash.display.Stage;
@@ -9,49 +8,30 @@ package bb.modules
 	 */
 	public class BBModule
 	{
-		//
-		private var _updateEnable:Boolean = false;
+		internal var prev:BBModule = null;
+		internal var next:BBModule = null;
+		internal var prevUpd:BBModule = null;
+		internal var nextUpd:BBModule = null;
 
 		//
-		private var _engine:BBModuleEngine;
-
-		// [for internal use]
-		private var _z_onSystemInit:BBSignal;
+		internal var _updateEnable:Boolean = false;
 
 		//
+		internal var _engine:BBModuleEngine;
+
 		private var _onInit:BBSignal;
-
-		//
 		private var _onReadyToUse:BBSignal;
-
-		//
 		private var _onDispose:BBSignal;
-
-		//
 		private var _onUpdate:BBSignal;
 
 		/**
 		 */
 		public function BBModule()
 		{
-			_z_onSystemInit = BBSignal.get(this, true);
-			_z_onSystemInit.add(moduleWasAddedToSystem);
-
 			_onInit = BBSignal.get(this, true);
 			_onReadyToUse = BBSignal.get(this, true);
 			_onDispose = BBSignal.get(this);
 			_onUpdate = BBSignal.get(this);
-		}
-
-		/**
-		 */
-		private function moduleWasAddedToSystem(p_signal:BBSignal):void
-		{
-			_engine = p_signal.params as BBModuleEngine;
-
-			//
-			_z_onSystemInit.dispose();
-			_z_onSystemInit = null;
 		}
 
 		/**
@@ -71,7 +51,7 @@ package bb.modules
 			if (_updateEnable == p_val || !isInitialized) return;
 			_updateEnable = p_val;
 
-		   _onUpdate.dispatch();
+			_onUpdate.dispatch();
 		}
 
 		/**
@@ -103,14 +83,6 @@ package bb.modules
 		public function get engine():BBModuleEngine
 		{
 			return _engine;
-		}
-
-		/**
-		 * @private
-		 */
-		public function get z_onSystemInit():BBSignal
-		{
-			return _z_onSystemInit;
 		}
 
 		/**
@@ -161,7 +133,7 @@ package bb.modules
 		 */
 		public function dispose():void
 		{
-		    _onDispose.dispatch();
+			_onDispose.dispatch();
 			_onDispose.dispose();
 			_onDispose = null;
 

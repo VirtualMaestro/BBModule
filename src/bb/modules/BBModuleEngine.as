@@ -34,6 +34,9 @@ package bb.modules
 
 		private var _registrationList:Vector.<BBModule>;
 
+		private var _isStats:Boolean = false;
+		private var _stats:BBStats;
+
 		/**
 		 */
 		public function BBModuleEngine(p_stage:Stage = null)
@@ -53,8 +56,10 @@ package bb.modules
 		{
 			CONFIG::debug
 			{
-				Assert.isTrue(ClassUtil.isSubclassOf(moduleClass, BBModule), "ERROR! bb.modules.BBModuleEngine.addModule: given moduleClass is not an inheritor of BBModule class!");
-				Assert.isTrue(isModuleAlreadyInSystem(moduleClass) == false, "ERROR! bb.modules.BBModuleEngine.addModule: given moduleClass already in system!");
+				Assert.isTrue(ClassUtil.isSubclassOf(moduleClass, BBModule),
+				              "ERROR! bb.modules.BBModuleEngine.addModule: given moduleClass is not an inheritor of BBModule class!");
+				Assert.isTrue(isModuleAlreadyInSystem(moduleClass) == false,
+				              "ERROR! bb.modules.BBModuleEngine.addModule: given moduleClass already in system!");
 			}
 
 			var module:BBModule = new moduleClass();
@@ -151,9 +156,14 @@ package bb.modules
 		private function updateModulesLoop(event:Event):void
 		{
 			var currentTime:int = getTimer();
+			var currentTimeStats:int = currentTime;
 			var deltaTime:int;
 
-			if (_prevTime == 1) deltaTime = _prevTime;
+			if (_prevTime == 1)
+			{
+				currentTimeStats = 2;
+				deltaTime = _prevTime;
+			}
 			else
 			{
 				if (fixedTimeStep > 0) deltaTime = fixedTimeStep;
@@ -172,6 +182,8 @@ package bb.modules
 				curModule.update(deltaTime);
 				if (module && !module._updateEnable) module = module.next;
 			}
+
+			if (_isStats) _stats.update(_prevTime, currentTimeStats, getTimer() - currentTime);
 
 			//
 			_prevTime = currentTime;
@@ -332,6 +344,37 @@ package bb.modules
 			}
 
 			return false;
+		}
+
+		/**
+		 */
+		public function set stats(p_val:Boolean):void
+		{
+			if (_isStats == p_val) return;
+			_isStats = p_val;
+
+			if (_isStats)
+			{
+				if (_stats == null) _stats = new BBStats();
+				stage.addChildAt(_stats, stage.numChildren);
+			}
+			else
+			{
+				stage.removeChild(_stats);
+			}
+		}
+
+		public function get stats():Boolean
+		{
+			return _isStats;
+		}
+
+		/**
+		 * Set display style for stats window.
+		 */
+		public function setStyleStats(p_backgroundColor:uint = 0x000000, p_textColor:uint = 0xffffff):void
+		{
+			if (_stats) _stats.setStyle(p_backgroundColor, p_textColor);
 		}
 	}
 }

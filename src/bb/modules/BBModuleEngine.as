@@ -51,8 +51,11 @@ package bb.modules
 		 * Method creates and adds module to system.
 		 * As parameter set class of module.
 		 * (If class is not inheritor of BBModule class then generates exception - if debug version of lib).
+		 *
+		 * if 'p_immediately' is true, module added immediately without registration loop.
+		 * But be careful, use only in runtime. Be sure that modules which gets current module already in system and initialized.
 		 */
-		public function addModule(moduleClass:Class):BBModule
+		public function addModule(moduleClass:Class, p_immediately:Boolean = false):BBModule
 		{
 			CONFIG::debug
 			{
@@ -63,11 +66,29 @@ package bb.modules
 			}
 
 			var module:BBModule = new moduleClass();
-			_registrationList.push(module);
 
-			checkForOnOffRegisterModulesLoop();
+			if (p_immediately) addModuleImmediately(module);
+			else
+			{
+				_registrationList.push(module);
+				checkForOnOffRegisterModulesLoop();
+			}
 
 			return module;
+		}
+
+		/**
+		 * Adds module immediately without loop registration process.
+		 */
+		private function addModuleImmediately(p_module:BBModule):void
+		{
+			p_module.onDispose.add(removeModuleHandler);
+			p_module.onUpdate.add(updateModuleHandler);
+			addToList(p_module);
+			p_module._engine = this;
+
+			p_module.onInit.dispatch();
+			p_module.onReadyToUse.dispatch();
 		}
 
 		/**

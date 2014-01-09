@@ -14,11 +14,12 @@ package bb.modules
 		internal var nextUpd:BBModule = null;
 
 		//
-		internal var _updateEnable:Boolean = false;
+		internal var i_updateEnable:Boolean = false;
 
 		//
-		internal var _engine:BBModuleEngine;
+		internal var i_engine:BBModuleEngine;
 
+		// signals
 		private var _onInit:BBSignal;
 		private var _onReadyToUse:BBSignal;
 		private var _onDispose:BBSignal;
@@ -28,10 +29,22 @@ package bb.modules
 		 */
 		public function BBModule()
 		{
-			_onInit = BBSignal.get(this, true);
-			_onReadyToUse = BBSignal.get(this, true);
 			_onDispose = BBSignal.get(this);
 			_onUpdate = BBSignal.get(this);
+		}
+
+		/**
+		 */
+		internal function init():void
+		{
+			if (_onInit) _onInit.dispatch();
+		}
+
+		/**
+		 */
+		internal function readyToUse():void
+		{
+			if (_onReadyToUse) _onReadyToUse.dispatch();
 		}
 
 		/**
@@ -39,7 +52,7 @@ package bb.modules
 		 */
 		public function getModule(p_moduleClass:Class):BBModule
 		{
-			return _engine.getModule(p_moduleClass);
+			return i_engine.getModule(p_moduleClass);
 		}
 
 		/**
@@ -48,8 +61,8 @@ package bb.modules
 		 */
 		public function set updateEnable(p_val:Boolean):void
 		{
-			if (_updateEnable == p_val || !isInitialized) return;
-			_updateEnable = p_val;
+			if (i_updateEnable == p_val || !isInitialized) return;
+			i_updateEnable = p_val;
 
 			_onUpdate.dispatch();
 		}
@@ -58,7 +71,7 @@ package bb.modules
 		 */
 		public function get updateEnable():Boolean
 		{
-			return _updateEnable;
+			return i_updateEnable;
 		}
 
 		/**
@@ -72,17 +85,17 @@ package bb.modules
 
 		/**
 		 */
-		public function get stage():Stage
+		final public function get stage():Stage
 		{
-			return _engine.stage;
+			return i_engine.stage;
 		}
 
 		/**
 		 * Returns module engine.
 		 */
-		public function get engine():BBModuleEngine
+		final public function get engine():BBModuleEngine
 		{
-			return _engine;
+			return i_engine;
 		}
 
 		/**
@@ -90,8 +103,9 @@ package bb.modules
 		 * Should use if need initialize some module's data, fields, variables or caching other modules.
 		 * This signal goes before onReadyToUse.
 		 */
-		public function get onInit():BBSignal
+		final public function get onInit():BBSignal
 		{
+			if (_onInit == null) _onInit = BBSignal.get(this, true);
 			return _onInit;
 		}
 
@@ -99,15 +113,16 @@ package bb.modules
 		 * Module ready to use - module was created, added to system and initialized.
 		 * This signal goes after onInit.
 		 */
-		public function get onReadyToUse():BBSignal
+		final public function get onReadyToUse():BBSignal
 		{
+			if (_onReadyToUse == null) _onReadyToUse = BBSignal.get(this, true);
 			return _onReadyToUse;
 		}
 
 		/**
 		 * Invoke when module have to remove.
 		 */
-		public function get onDispose():BBSignal
+		final public function get onDispose():BBSignal
 		{
 			return _onDispose;
 		}
@@ -115,7 +130,7 @@ package bb.modules
 		/**
 		 * When need switch on/off updating in module ('update' method starts/ends is invoked every frame).
 		 */
-		public function get onUpdate():BBSignal
+		final public function get onUpdate():BBSignal
 		{
 			return _onUpdate;
 		}
@@ -123,9 +138,9 @@ package bb.modules
 		/**
 		 * Is module initialized (added to system) already.
 		 */
-		public function get isInitialized():Boolean
+		final public function get isInitialized():Boolean
 		{
-			return _engine != null;
+			return i_engine != null;
 		}
 
 		/**
@@ -133,6 +148,8 @@ package bb.modules
 		 */
 		public function dispose():void
 		{
+			if (_onDispose == null) return;
+
 			_onDispose.dispatch();
 			_onDispose.dispose();
 			_onDispose = null;
@@ -140,15 +157,15 @@ package bb.modules
 			_onUpdate.dispose();
 			_onUpdate = null;
 
-			_onInit.dispose();
+			if (_onInit) _onInit.dispose();
 			_onInit = null;
 
-			_onReadyToUse.dispose();
+			if (_onReadyToUse) _onReadyToUse.dispose();
 			_onReadyToUse = null;
 
 			//
-			_engine = null;
-			_updateEnable = false;
+			i_engine = null;
+			i_updateEnable = false;
 		}
 	}
 }

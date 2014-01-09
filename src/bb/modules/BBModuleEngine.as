@@ -4,6 +4,7 @@ package bb.modules
 
 	import flash.display.Stage;
 	import flash.events.Event;
+	import flash.utils.Dictionary;
 	import flash.utils.getTimer;
 
 	CONFIG::debug
@@ -37,6 +38,8 @@ package bb.modules
 		private var _isStats:Boolean = false;
 		private var _stats:BBStats;
 
+		private var _modulesTable:Dictionary;
+
 		/**
 		 */
 		public function BBModuleEngine(p_stage:Stage = null)
@@ -45,6 +48,7 @@ package bb.modules
 
 			//
 			_registrationList = new <BBModule>[];
+			_modulesTable = new Dictionary();
 		}
 
 		/**
@@ -61,12 +65,15 @@ package bb.modules
 			{
 				Assert.isTrue(ClassUtil.isSubclassOf(moduleClass, BBModule),
 				              "ERROR! bb.modules.BBModuleEngine.addModule: given moduleClass is not an inheritor of BBModule class!");
-				Assert.isTrue(isModuleAlreadyInSystem(moduleClass) == false,
+				Assert.isTrue(isModuleExist(moduleClass) == false,
 				              "ERROR! bb.modules.BBModuleEngine.addModule: given moduleClass already in system!");
 			}
 
+			//
 			var module:BBModule = new moduleClass();
+			_modulesTable[moduleClass] = module;
 
+			//
 			if (p_immediately) addModuleImmediately(module);
 			else
 			{
@@ -82,13 +89,10 @@ package bb.modules
 		 */
 		private function addModuleImmediately(p_module:BBModule):void
 		{
-			p_module.onDispose.add(removeModuleHandler);
-			p_module.onUpdate.add(updateModuleHandler);
-			addToList(p_module);
-			p_module._engine = this;
+			addModuleToEngine(p_module);
 
-			p_module.onInit.dispatch();
-			p_module.onReadyToUse.dispatch();
+			p_module.init();
+			p_module.readyToUse();
 		}
 
 		/**
@@ -97,15 +101,7 @@ package bb.modules
 		 */
 		public function getModule(moduleClass:Class):BBModule
 		{
-			var resultModule:BBModule = _head;
-
-			while (resultModule)
-			{
-				if (resultModule is moduleClass) return resultModule;
-				resultModule = resultModule.next;
-			}
-
-			return null;
+			return _modulesTable[moduleClass];
 		}
 
 		/**
@@ -113,39 +109,47 @@ package bb.modules
 		private function registerModulesLoop(event:Event):void
 		{
 			var numModules:int = _registrationList.length;
+			var registeredList:Vector.<BBModule> = new Vector.<BBModule>(numModules);
 			var module:BBModule;
 
+			// add module to engine
 			for (var i:int = 0; i < numModules; i++)
 			{
 				module = _registrationList[i];
+				registeredList[i] = module;
 				_registrationList[i] = null;
 
-				module.onDispose.add(removeModuleHandler);
-				module.onUpdate.add(updateModuleHandler);
-				addToList(module);
-				module._engine = this;
+				addModuleToEngine(module);
 			}
 
 			_registrationList.length = 0;
 
 			// send signal onInit for all registered modules
-			module = _head;
-			while (module)
+			for (i = 0; i < numModules; i++)
 			{
-				module.onInit.dispatch();
-				module = module.next;
+				registeredList[i].init();
 			}
 
 			// send signal onReadyToUse for all registered modules
-			module = _head;
-			while (module)
+			for (i = 0; i < numModules; i++)
 			{
-				module.onReadyToUse.dispatch();
-				module = module.next;
+				module = registeredList[i];
+				if (module.isInitialized) module.readyToUse();
 			}
 
 			//
 			checkForOnOffRegisterModulesLoop();
+		}
+
+		/**
+		 * Adds module to engine with all initializations.
+		 */
+		private function addModuleToEngine(p_module:BBModule):void
+		{
+			p_module.onDispose.add(removeModuleHandler);
+			p_module.onUpdate.add(updateModuleHandler);
+			addToList(p_module);
+			p_module.i_engine = this;
 		}
 
 		/**
@@ -155,6 +159,21 @@ package bb.modules
 			var module:BBModule = signal.dispatcher as BBModule;
 			if (module.updateEnable) unlinkFromUpdateList(module);
 			unlinkFromList(module);
+			removeModuleFromTable(module);
+		}
+
+		/**
+		 */
+		private function removeModuleFromTable(p_module:BBModule):void
+		{
+			for (var classKey:Object in _modulesTable)
+			{
+				if (_modulesTable[classKey] == p_module)
+				{
+					delete _modulesTable[classKey];
+					break;
+				}
+			}
 		}
 
 		/**
@@ -201,7 +220,7 @@ package bb.modules
 				module = module.next;
 
 				curModule.update(deltaTime);
-				if (module && !module._updateEnable) module = module.next;
+				if (module && !module.i_updateEnable) module = module.next;
 			}
 
 			if (_isStats) _stats.update(_prevTime, currentTimeStats, getTimer() - currentTime);
@@ -354,17 +373,23 @@ package bb.modules
 			p_module.prevUpd = null;
 		}
 
-		CONFIG::debug
-		private function isModuleAlreadyInSystem(moduleClass:Class):Boolean
+		/**
+		 * Check if module exist in engine.
+		 * It is doesn't check if module initialized already.
+		 * For checking exist and init use method 'isModuleExistAndInit'.
+		 */
+		final public function isModuleExist(p_moduleClass:Class):Boolean
 		{
-			var module:BBModule = _head;
-			while (module)
-			{
-				if (module is moduleClass) return true;
-				module = module.next;
-			}
+			return _modulesTable[p_moduleClass] != null;
+		}
 
-			return false;
+		/**
+		 * Check if module exist and init already.
+		 */
+		final public function isModuleExistAndInit(p_moduleClass:Class):Boolean
+		{
+			var module:BBModule = _modulesTable[p_moduleClass];
+			return  (module && module.isInitialized);
 		}
 
 		/**

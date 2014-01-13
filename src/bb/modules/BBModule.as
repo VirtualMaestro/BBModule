@@ -48,6 +48,14 @@ package bb.modules
 		}
 
 		/**
+		 * Adds module through another module to engine.
+		 */
+		public function addModule(p_module:Class, p_immediately:Boolean = false):BBModule
+		{
+			return i_engine.addModule(p_module, p_immediately);
+		}
+
+		/**
 		 * Returns module (which in system) by given class name of needed module.
 		 */
 		public function getModule(p_moduleClass:Class):BBModule

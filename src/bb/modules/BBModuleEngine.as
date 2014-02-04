@@ -217,10 +217,10 @@ package bb.modules
 			while (module)
 			{
 				curModule = module;
-				module = module.next;
+				module = module.nextUpd;
 
 				curModule.update(deltaTime);
-				if (module && !module.i_updateEnable) module = module.next;
+				if (module && !module.i_updateEnable) module = module.nextUpd;
 			}
 
 			if (_isStats) _stats.update(_prevTime, currentTimeStats, getTimer() - currentTime);

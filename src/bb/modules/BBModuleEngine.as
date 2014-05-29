@@ -1,17 +1,9 @@
 package bb.modules
 {
-	import bb.signals.BBSignal;
-
 	import flash.display.Stage;
 	import flash.events.Event;
 	import flash.utils.Dictionary;
 	import flash.utils.getTimer;
-
-	CONFIG::debug
-	{
-		import vm.classes.ClassUtil;
-		import vm.debug.Assert;
-	}
 
 	/**
 	 * Engine of module system.
@@ -41,6 +33,11 @@ package bb.modules
 		private var _modulesTable:Dictionary;
 
 		/**
+		 * Map where key is name of event, value - dll with listeners.
+		 */
+		private var _listenersMap:Dictionary;
+
+		/**
 		 */
 		public function BBModuleEngine(p_stage:Stage = null)
 		{
@@ -49,6 +46,7 @@ package bb.modules
 			//
 			_registrationList = new <BBModule>[];
 			_modulesTable = new Dictionary();
+			_listenersMap = new Dictionary();
 		}
 
 		/**
@@ -63,8 +61,6 @@ package bb.modules
 		{
 			CONFIG::debug
 			{
-				Assert.isTrue(ClassUtil.isSubclassOf(moduleClass, BBModule),
-				              "ERROR! bb.modules.BBModuleEngine.addModule: given moduleClass is not an inheritor of BBModule class!");
 				Assert.isTrue(isModuleExist(moduleClass) == false,
 				              "ERROR! bb.modules.BBModuleEngine.addModule: given moduleClass already in system!");
 			}
@@ -91,8 +87,8 @@ package bb.modules
 		{
 			addModuleToEngine(p_module);
 
-			p_module.init();
-			p_module.readyToUse();
+			p_module.selfInit();
+			p_module.selfReady();
 		}
 
 		/**
@@ -124,17 +120,17 @@ package bb.modules
 
 			_registrationList.length = 0;
 
-			// send signal onInit for all registered modules
+			// invokes init method for all registered modules
 			for (i = 0; i < numModules; i++)
 			{
-				registeredList[i].init();
+				registeredList[i].selfInit();
 			}
 
-			// send signal onReadyToUse for all registered modules
+			// invokes ready method for all registered modules
 			for (i = 0; i < numModules; i++)
 			{
 				module = registeredList[i];
-				if (module.isInitialized) module.readyToUse();
+				if (module.isInitialized) module.selfReady();
 			}
 
 			//
@@ -146,20 +142,18 @@ package bb.modules
 		 */
 		private function addModuleToEngine(p_module:BBModule):void
 		{
-			p_module.onDispose.add(removeModuleHandler);
-			p_module.onUpdate.add(updateModuleHandler);
 			addToList(p_module);
 			p_module.i_engine = this;
 		}
 
 		/**
+		 * Invoked by module for removing itself.
 		 */
-		private function removeModuleHandler(signal:BBSignal):void
+		internal function removeModule(p_module:BBModule):void
 		{
-			var module:BBModule = signal.dispatcher as BBModule;
-			if (module.updateEnable) unlinkFromUpdateList(module);
-			unlinkFromList(module);
-			removeModuleFromTable(module);
+			if (p_module.updateEnable) unlinkFromUpdateList(p_module);
+			unlinkFromList(p_module);
+			removeModuleFromTable(p_module);
 		}
 
 		/**
@@ -178,11 +172,10 @@ package bb.modules
 
 		/**
 		 */
-		private function updateModuleHandler(signal:BBSignal):void
+		internal function updateModule(p_module:BBModule):void
 		{
-			var module:BBModule = signal.dispatcher as BBModule;
-			if (module.updateEnable) addToUpdateList(module);
-			else unlinkFromUpdateList(module);
+			if (p_module.updateEnable) addToUpdateList(p_module);
+			else unlinkFromUpdateList(p_module);
 
 			//
 			checkForOnOffUpdateModulesLoop();
@@ -283,6 +276,7 @@ package bb.modules
 		public function set stage(val:Stage):void
 		{
 			if ((_stage != null) || (val == null)) return;
+
 			_stage = val;
 			checkForOnOffRegisterModulesLoop();
 		}
@@ -390,6 +384,42 @@ package bb.modules
 		{
 			var module:BBModule = _modulesTable[p_moduleClass];
 			return  (module && module.isInitialized);
+		}
+
+		/**
+		 */
+		internal function dispatch(p_event:BBEvent):void
+		{
+			var dll:DLL = _listenersMap[p_event.name];
+			if (dll && dll.size > 0)
+			{
+				var node:Node = dll.head;
+				var currentNode:Node;
+				while (node)
+				{
+					currentNode = node;
+					node = node.next;
+
+					currentNode.listener();
+				}
+			}
+		}
+
+		/**
+		 */
+		internal function addListener(p_eventName:String, p_listenerMethod:Function, p_senderModule:BBModule):Node
+		{
+			var node:Node = Node.get(p_listenerMethod, p_senderModule);
+			var listeners:DLL = _listenersMap[p_eventName];
+			if (listeners == null)
+			{
+				listeners = new DLL();
+				_listenersMap[p_eventName] = listeners;
+			}
+
+			listeners.add(node);
+
+			return node;
 		}
 
 		/**

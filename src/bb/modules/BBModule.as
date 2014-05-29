@@ -1,8 +1,7 @@
 package bb.modules
 {
-	import bb.signals.BBSignal;
-
 	import flash.display.Stage;
+	import flash.utils.Dictionary;
 
 	/**
 	 */
@@ -19,32 +18,48 @@ package bb.modules
 		//
 		internal var i_engine:BBModuleEngine;
 
-		// signals
-		private var _onInit:BBSignal;
-		private var _onReadyToUse:BBSignal;
-		private var _onDispose:BBSignal;
-		private var _onUpdate:BBSignal;
+		/**
+		 * Map where key is event name, value - instance of Node with listener method.
+		 */
+		private var _listeners:Dictionary;
 
 		/**
 		 */
 		public function BBModule()
 		{
-			_onDispose = BBSignal.get(this);
-			_onUpdate = BBSignal.get(this);
+			_listeners = new Dictionary();
 		}
 
 		/**
 		 */
-		internal function init():void
+		internal function selfInit():void
 		{
-			if (_onInit) _onInit.dispatch();
+			init();
+		}
+
+		/**
+		 * When module added to engine.
+		 * In this state it is possible to init module's values or cache other modules, but can't use it (modules).
+		 */
+		protected function init():void
+		{
+			// should be override
 		}
 
 		/**
 		 */
-		internal function readyToUse():void
+		internal function selfReady():void
 		{
-			if (_onReadyToUse) _onReadyToUse.dispatch();
+			ready();
+		}
+
+		/**
+		 * When module completely init and ready to work.
+		 * At this step it is possible to use everything.
+		 */
+		protected function ready():void
+		{
+			// should be override
 		}
 
 		/**
@@ -72,7 +87,7 @@ package bb.modules
 			if (i_updateEnable == p_val || !isInitialized) return;
 			i_updateEnable = p_val;
 
-			_onUpdate.dispatch();
+			i_engine.updateModule(this);
 		}
 
 		/**
@@ -93,6 +108,44 @@ package bb.modules
 
 		/**
 		 */
+		protected function addListener(p_eventName:String, p_listener:Function):void
+		{
+			if (_listeners[p_eventName] == null)
+			{
+				_listeners[p_eventName] = i_engine.addListener(p_eventName, p_listener, this);
+			}
+		}
+
+		protected function removeListener(p_eventName:String):void
+		{
+			var node:Node = _listeners[p_eventName];
+			if (node) node.unlink();
+			delete _listeners[p_eventName];
+		}
+
+		/**
+		 * Removed all listeners from that module.
+		 */
+		protected function removeAllListeners():void
+		{
+			for each (var key:String in _listeners)
+			{
+				removeListener(key);
+			}
+		}
+
+		/**
+		 * Dispatched event for other modules.
+		 */
+		protected function dispatch(p_eventName:String, p_param:Object = null):void
+		{
+			var event:BBEvent = BBEvent.get(p_eventName, this, p_param);
+			i_engine.dispatch(event);
+			event.dispose();
+		}
+
+		/**
+		 */
 		final public function get stage():Stage
 		{
 			return i_engine.stage;
@@ -107,43 +160,6 @@ package bb.modules
 		}
 
 		/**
-		 * Dispatches when module was created and added to engine.
-		 * Should use if need initialize some module's data, fields, variables or caching other modules.
-		 * This signal goes before onReadyToUse.
-		 */
-		final public function get onInit():BBSignal
-		{
-			if (_onInit == null) _onInit = BBSignal.get(this, true);
-			return _onInit;
-		}
-
-		/**
-		 * Module ready to use - module was created, added to system and initialized.
-		 * This signal goes after onInit.
-		 */
-		final public function get onReadyToUse():BBSignal
-		{
-			if (_onReadyToUse == null) _onReadyToUse = BBSignal.get(this, true);
-			return _onReadyToUse;
-		}
-
-		/**
-		 * Invoke when module have to remove.
-		 */
-		final public function get onDispose():BBSignal
-		{
-			return _onDispose;
-		}
-
-		/**
-		 * When need switch on/off updating in module ('update' method starts/ends is invoked every frame).
-		 */
-		final public function get onUpdate():BBSignal
-		{
-			return _onUpdate;
-		}
-
-		/**
 		 * Is module initialized (added to system) already.
 		 */
 		final public function get isInitialized():Boolean
@@ -153,23 +169,14 @@ package bb.modules
 
 		/**
 		 * Remove current module from system.
+		 * Also removed all listeners of module.
 		 */
 		public function dispose():void
 		{
-			if (_onDispose == null) return;
+			if (i_engine == null) return;
 
-			_onDispose.dispatch();
-			_onDispose.dispose();
-			_onDispose = null;
-
-			_onUpdate.dispose();
-			_onUpdate = null;
-
-			if (_onInit) _onInit.dispose();
-			_onInit = null;
-
-			if (_onReadyToUse) _onReadyToUse.dispose();
-			_onReadyToUse = null;
+			removeAllListeners();
+			i_engine.removeModule(this);
 
 			//
 			i_engine = null;

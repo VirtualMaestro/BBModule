@@ -7,8 +7,6 @@ package bb.modules
 	 */
 	public class BBEvent
 	{
-		public var stopPropagation:Boolean = false;
-
 		private var _name:String;
 		private var _param:Object;
 		private var _sender:Object;
@@ -47,7 +45,6 @@ package bb.modules
 
 			put(this);
 		}
-
 
 		public function toString():String
 		{

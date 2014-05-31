@@ -400,7 +400,7 @@ package bb.modules
 					currentNode = node;
 					node = node.next;
 
-					currentNode.listener();
+					currentNode.listener(p_event);
 				}
 			}
 		}
@@ -409,7 +409,6 @@ package bb.modules
 		 */
 		internal function addListener(p_eventName:String, p_listenerMethod:Function, p_senderModule:BBModule):Node
 		{
-			var node:Node = Node.get(p_listenerMethod, p_senderModule);
 			var listeners:DLL = _listenersMap[p_eventName];
 			if (listeners == null)
 			{
@@ -417,9 +416,7 @@ package bb.modules
 				_listenersMap[p_eventName] = listeners;
 			}
 
-			listeners.add(node);
-
-			return node;
+			return listeners.add(p_listenerMethod, p_senderModule);
 		}
 
 		/**

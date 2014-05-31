@@ -48,7 +48,16 @@ package bb.modules
 			put(this);
 		}
 
-		//
+
+		public function toString():String
+		{
+			return "Event name: " + _name + "\n" +
+					"Param: " + _param + "\n" +
+					"Sender: " + _sender;
+
+		}
+
+//
 
 		static private var _pool:Vector.<BBEvent> = new <BBEvent>[];
 		static private var _size:int = 0;

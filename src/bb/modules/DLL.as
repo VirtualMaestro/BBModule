@@ -12,17 +12,22 @@ package bb.modules
 
 		/**
 		 */
-		public function add(p_node:Node):void
+		public function add(p_listenerMethod:Function, p_senderModule:BBModule):Node
 		{
+			var node:Node = Node.get(p_listenerMethod, p_senderModule);
+			node.dll = this;
+
 			if (tail)
 			{
-				tail.next = p_node;
-				p_node.prev = tail;
-				tail = p_node;
+				tail.next = node;
+				node.prev = tail;
+				tail = node;
 			}
-			else head = tail = p_node;
+			else head = tail = node;
 
 			++size;
+
+			return node;
 		}
 
 		/**

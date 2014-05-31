@@ -128,7 +128,7 @@ package bb.modules
 		 */
 		protected function removeAllListeners():void
 		{
-			for each (var key:String in _listeners)
+			for (var key:String in _listeners)
 			{
 				removeListener(key);
 			}

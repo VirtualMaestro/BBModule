@@ -212,7 +212,17 @@ package bb.modules
 				curModule = module;
 				module = module.nextUpd;
 
-				curModule.update(deltaTime);
+				if (curModule.skip == 0) curModule.update(deltaTime);
+				else
+				{
+					if (curModule.i_skipped >= curModule.skip)
+					{
+						curModule.i_skipped = 0;
+						curModule.update(deltaTime);
+					}
+					else curModule.i_skipped++;
+				}
+
 				if (module && !module.i_updateEnable) module = module.nextUpd;
 			}
 

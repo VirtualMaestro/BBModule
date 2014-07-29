@@ -7,10 +7,20 @@ package bb.modules
 	 */
 	public class BBModule
 	{
+		/**
+		 * Number of frames which need to skip before invoking "update" method.
+		 * E.g. skip = 1, every second frame is invoked "update" method.
+		 */
+		public var skip:uint = 0;
+
+		//
 		internal var prev:BBModule = null;
 		internal var next:BBModule = null;
 		internal var prevUpd:BBModule = null;
 		internal var nextUpd:BBModule = null;
+
+		//
+		internal var i_skipped:uint = 0;
 
 		//
 		internal var i_updateEnable:Boolean = false;

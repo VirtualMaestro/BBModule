@@ -396,6 +396,10 @@ package bb.modules
 			return  (module && module.isInitialized);
 		}
 
+		///////////////////////////////
+		///// EVENT SYSTEM ///////////
+		//////////////////////////////
+
 		/**
 		 */
 		internal function dispatch(p_event:BBEvent):void
@@ -405,11 +409,16 @@ package bb.modules
 			{
 				var node:Node = dll.head;
 				var currentNode:Node;
+				var senderClass:Class;
+
 				while (node)
 				{
 					currentNode = node;
 					node = node.next;
 
+					senderClass = currentNode.senderModuleClass;
+
+					if (senderClass && !(p_event.sender is senderClass)) continue;
 					currentNode.listener(p_event);
 				}
 			}
@@ -417,7 +426,7 @@ package bb.modules
 
 		/**
 		 */
-		internal function addListener(p_eventName:String, p_listenerMethod:Function, p_senderModule:BBModule):Node
+		internal function addListener(p_eventName:String, p_listenerMethod:Function, p_listenerModule:BBModule, p_senderModuleClass:Class = null):Node
 		{
 			var listeners:DLL = _listenersMap[p_eventName];
 			if (listeners == null)
@@ -426,8 +435,34 @@ package bb.modules
 				_listenersMap[p_eventName] = listeners;
 			}
 
-			return listeners.add(p_listenerMethod, p_senderModule);
+			return listeners.add(p_listenerMethod, p_listenerModule, p_senderModuleClass);
 		}
+
+		/**
+		 * Removes all listeners of all modules.
+		 */
+		protected function removeAllListeners():void
+		{
+			var listeners:DLL;
+			var node:Node;
+			for (var eventName:String in _listenersMap)
+			{
+				listeners = _listenersMap[eventName];
+				node = listeners.head;
+
+				while (node)
+				{
+					node.listenerModule.clearListenersMap();
+					node = node.next;
+				}
+
+				listeners.clear();
+				delete _listenersMap[eventName];
+			}
+		}
+
+		////////////////////
+		////////////////////
 
 		/**
 		 */

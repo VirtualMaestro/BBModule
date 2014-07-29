@@ -2,6 +2,7 @@ package bb.modules
 {
 	import flash.display.Stage;
 	import flash.utils.Dictionary;
+	import flash.utils.getQualifiedClassName;
 
 	/**
 	 */
@@ -118,14 +119,16 @@ package bb.modules
 
 		/**
 		 */
-		protected function addListener(p_eventName:String, p_listener:Function):void
+		protected function addListener(p_eventName:String, p_listener:Function, p_senderModuleClass:Class = null):void
 		{
 			if (_listeners[p_eventName] == null)
 			{
-				_listeners[p_eventName] = i_engine.addListener(p_eventName, p_listener, this);
+				_listeners[p_eventName] = i_engine.addListener(p_eventName, p_listener, this, p_senderModuleClass);
 			}
 		}
 
+		/**
+		 */
 		protected function removeListener(p_eventName:String):void
 		{
 			var node:Node = _listeners[p_eventName];
@@ -141,6 +144,17 @@ package bb.modules
 			for (var key:String in _listeners)
 			{
 				removeListener(key);
+			}
+		}
+
+		/**
+		 * Used by engine.
+		 */
+		internal function clearListenersMap():void
+		{
+			for (var eventName:String in _listeners)
+			{
+				delete _listeners[eventName];
 			}
 		}
 
@@ -191,6 +205,13 @@ package bb.modules
 			//
 			i_engine = null;
 			i_updateEnable = false;
+		}
+
+		/**
+		 */
+		public function toString():String
+		{
+			return "Module - [name:" + getQualifiedClassName(this) + "], [initialized: " + isInitialized + "], [update: " + updateEnable + "], [skip: " + skip + "]";
 		}
 	}
 }

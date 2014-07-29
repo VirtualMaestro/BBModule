@@ -12,9 +12,9 @@ package bb.modules
 
 		/**
 		 */
-		public function add(p_listenerMethod:Function, p_senderModule:BBModule):Node
+		public function add(p_listenerMethod:Function, p_listenerModule:BBModule, p_senderModuleClass:Class = null):Node
 		{
-			var node:Node = Node.get(p_listenerMethod, p_senderModule);
+			var node:Node = Node.get(p_listenerMethod, p_listenerModule, p_senderModuleClass);
 			node.dll = this;
 
 			if (tail)
@@ -64,14 +64,9 @@ package bb.modules
 		 */
 		public function clear():void
 		{
-			var currentNode:Node;
-
 			while (tail)
 			{
-				currentNode = tail;
-				tail = tail.prev;
-
-				currentNode.unlink();
+				tail.unlink();
 			}
 		}
 	}

@@ -9,11 +9,11 @@ package bb.modules
 	{
 		private var _name:String;
 		private var _param:Object;
-		private var _sender:Object;
+		private var _sender:BBModule;
 
 		/**
 		 */
-		public function BBEvent(p_name:String, p_param:Object = null, p_sender:Object = null)
+		public function BBEvent(p_name:String, p_sender:BBModule = null, p_param:Object = null)
 		{
 			_name = p_name;
 			_param = p_param;
@@ -30,7 +30,7 @@ package bb.modules
 			return _param;
 		}
 
-		public function get sender():Object
+		public function get sender():BBModule
 		{
 			return _sender;
 		}
@@ -54,12 +54,11 @@ package bb.modules
 
 		}
 
-//
-
+		//
 		static private var _pool:Vector.<BBEvent> = new <BBEvent>[];
 		static private var _size:int = 0;
 
-		static public function get(p_name:String, p_param:Object = null, p_sender:Object = null):BBEvent
+		static public function get(p_name:String, p_sender:BBModule = null, p_param:Object = null):BBEvent
 		{
 			var event:BBEvent;
 
@@ -70,7 +69,7 @@ package bb.modules
 				event._param = p_param;
 				event._sender = p_sender;
 			}
-			else event = new BBEvent(p_name, p_param, p_sender);
+			else event = new BBEvent(p_name, p_sender, p_param);
 
 			return event;
 		}

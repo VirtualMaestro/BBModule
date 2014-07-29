@@ -10,7 +10,8 @@ package bb.modules
 		public var prev:Node;
 
 		public var listener:Function;
-		public var module:BBModule;
+		public var listenerModule:BBModule;
+		public var senderModuleClass:Class;
 
 		/**
 		 */
@@ -26,7 +27,8 @@ package bb.modules
 			dll = null;
 			next = prev = null;
 			listener = null;
-			module = null;
+			listenerModule = null;
+			senderModuleClass = null;
 
 			put(this);
 		}
@@ -37,7 +39,7 @@ package bb.modules
 
 		/**
 		 */
-		static public function get(p_listener:Function, p_module:BBModule):Node
+		static public function get(p_listener:Function, p_module:BBModule, p_senderModuleClass:Class = null):Node
 		{
 			var node:Node;
 
@@ -49,7 +51,8 @@ package bb.modules
 			else node = new Node();
 
 			node.listener = p_listener;
-			node.module = p_module;
+			node.listenerModule = p_module;
+			node.senderModuleClass = p_senderModuleClass;
 
 			return node;
 		}

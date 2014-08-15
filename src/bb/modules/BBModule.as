@@ -204,6 +204,7 @@ package bb.modules
 
 			//
 			i_engine = null;
+			_listeners = null;
 			i_updateEnable = false;
 		}
 
